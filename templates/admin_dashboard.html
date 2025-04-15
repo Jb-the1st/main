@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+</head>
+<body class="container">
+    <h1>Admin Dashboard</h1>
+    <a href="{{ url_for('admin_logout') }}">Logout</a>
+    <!-- Add this to your existing admin_dashboard.html -->
+<div class="admin-nav">
+    <a href="{{ url_for('admin_dashboard') }}">Users</a> | 
+    <a href="{{ url_for('manage_subjects') }}">Subjects</a>
+</div>
+
+    <!-- Search Form -->
+    <form action="{{ url_for('search_users', page=page) }}" method="post">
+        <input type="text" name="search" placeholder="Search users" required>
+        <button type="submit">Search</button>
+    </form>    
+    <h2>Users</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Actions</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.password }}</td>
+            <td>
+                <form action="{{ url_for('update_user', user_id=user.id) }}" method="post">
+                    <input type="text" name="username" value="{{ user.username }}">
+                    <input type="password" name="password" placeholder="New Password">
+                    <button type="submit">Update</button>
+                </form>
+                <a href="{{ url_for('delete_user', user_id=user.id) }}" onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- Pagination for Users -->
+    <div>
+        {% if page > 1 %}
+            <a href="{{ url_for('admin_dashboard', page=page-1) }}">Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+            <a href="{{ url_for('admin_dashboard', page=page+1) }}">Next</a>
+        {% endif %}
+    </div>
+
+    <h2>Scores</h2>
+    <table border="1">
+        <tr>
+            <th>Username</th>
+            <th>Score</th>
+            <th>subject_id</th>
+        </tr>
+        {% for score in scores %}
+        <tr>
+            <td>{{ score.username }}</td>
+            <td>{{ score.score }} %</td>
+            <td>{{ score.subject_id }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- Pagination for Scores -->
+    <div>
+        {% if total_pages > 1 %}
+            {% if page > 1 %}
+                <a href="{{ url_for('admin_dashboard', page=page-1) }}">Previous</a>
+            {% endif %}
+    
+            Page {{ page }} of {{ total_pages }}
+    
+            {% if page < total_pages %}
+                <a href="{{ url_for('admin_dashboard', page=page+1) }}">Next</a>
+            {% endif %}
+        {% endif %}
+    </div>
+    
+
+    <br>
+    <a href="{{ url_for('admin_logout') }}">Logout</a>
+</body>
+</html>

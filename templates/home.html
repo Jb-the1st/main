@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <style>
+        .question-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .question-number {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 3px;
+        }
+        .question-number.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .question-number.answered {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        .question-number.unanswered {
+            background-color: #f8f9fa;
+        }
+        .question-nav-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        #countdown {
+            font-size: 1.2rem;
+            color: #dc3545;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .options-container {
+            margin-top: 20px;
+        }
+        .option {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .option:hover {
+            background-color: #f1f1f1;
+        }
+        .option.selected {
+            background-color: #cce5ff;
+            border-color: #b8daff;
+        }
+        #result-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Welcome, {{ username }}</h2>
+            <p>Subject: {{ subject_name }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        </div>
+        
+        {% if has_taken_exam %}
+            <div class="alert alert-info">
+                <p>You have already taken this exam.</p>
+                <p>Your score: {{ score }}%</p>
+                <a href="{{ url_for('view_result') }}" class="btn btn-primary">View All Results</a>
+            </div>
+        {% else %}
+            <div id="countdown">05:00</div>
+            
+            <div class="question-nav-container">
+                <h4>Questions Navigation:</h4>
+                <div class="question-nav" id="question-nav">
+                    <!-- Question navigation buttons will be generated here -->
+                </div>
+            </div>
+            
+            <div id="question-container">
+                <h3 id="question-text">Loading question...</h3>
+                
+                <div class="options-container">
+                    <div class="option" id="option-a" onclick="selectOption('a')">Option A</div>
+                    <div class="option" id="option-b" onclick="selectOption('b')">Option B</div>
+                    <div class="option" id="option-c" onclick="selectOption('c')">Option C</div>
+                    <div class="option" id="option-d" onclick="selectOption('d')">Option D</div>
+                </div>
+                
+                <div class="nav-buttons">
+                    <button id="prev-btn" class="btn btn-secondary" onclick="previousQuestion()" disabled>Previous</button>
+                    <button id="next-btn" class="btn btn-primary" onclick="nextQuestion()">Next</button>
+                    <button id="submit-btn" class="btn btn-success" onclick="confirmSubmit()">Submit Test</button>
+                </div>
+            </div>
+            
+            <div id="result-container">
+                <h3>Test Results</h3>
+                <p id="result-text"></p>
+                <a href="{{ url_for('view_result') }}" class="btn btn-primary">View All Results</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Global variables
+        let currentQuestionIndex = 0;
+        let totalQuestions = parseInt('{{ total_questions|default(0) }}');
+        let userAnswers = {};
+        let timer;
+        let secondsRemaining = 5 * 60; // 30 minutes
+        
+        // Initialize the page
+        window.onload = function() {
+            if (JSON.parse('{{ has_taken_exam|tojson }}')) {
+                return; // Don't initialize if exam was already taken
+            }
+            
+            // Generate question navigation
+            generateQuestionNav();
+            
+            // Load the first question
+            loadQuestion(0);
+            
+            // Start the timer
+            startTimer();
+            
+            // Get any saved answers
+            fetchAllAnswers();
+            
+            // Update the submit button display
+            document.getElementById('submit-btn').style.display = 'none';
+        };
+        
+        // Generate question navigation buttons
+        function generateQuestionNav() {
+            const navContainer = document.getElementById('question-nav');
+            navContainer.innerHTML = '';
+            
+            for (let i = 0; i < totalQuestions; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'question-number unanswered';
+                btn.textContent = i + 1;
+                btn.onclick = function() {
+                    loadQuestion(i);
+                };
+                navContainer.appendChild(btn);
+            }
+        }
+        
+        // Update question navigation status
+        function updateQuestionNav() {
+            const buttons = document.querySelectorAll('.question-number');
+            
+            buttons.forEach((btn, index) => {
+                btn.classList.remove('active', 'answered', 'unanswered');
+                
+                if (index === currentQuestionIndex) {
+                    btn.classList.add('active');
+                } else if (userAnswers[index] !== undefined && userAnswers[index] !== '') {
+                    btn.classList.add('answered');
+                } else {
+                    btn.classList.add('unanswered');
+                }
+            });
+            
+            // Show submit button only when on the last question
+            if (currentQuestionIndex === totalQuestions - 1) {
+                document.getElementById('submit-btn').style.display = 'block';
+            } else {
+                document.getElementById('submit-btn').style.display = 'none';
+            }
+        }
+        
+        // Load a specific question
+        function loadQuestion(questionNum) {
+            // Save current answer before moving
+            saveCurrentAnswer();
+            
+            // Update current question index
+            currentQuestionIndex = questionNum;
+            
+            // Fetch the question data
+            fetch(`/get_question/${questionNum}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    
+                    // Update question text
+                    document.getElementById('question-text').textContent = `Question ${questionNum + 1}: ${data.question}`;
+                    
+                    // Update options
+                    document.getElementById('option-a').textContent = `A: ${data.option_a}`;
+                    document.getElementById('option-b').textContent = `B: ${data.option_b}`;
+                    document.getElementById('option-c').textContent = `C: ${data.option_c}`;
+                    document.getElementById('option-d').textContent = `D: ${data.option_d}`;
+                    
+                    // Clear previous selection
+                    clearOptionSelection();
+                    
+                    // Highlight any previous answer
+                    if (data.current_answer) {
+                        selectOption(data.current_answer, false);
+                    }
+                    
+                    // Update navigation buttons
+                    updateNavButtons();
+                    
+                    // Update question navigation
+                    updateQuestionNav();
+                })
+                .catch(error => {
+                    console.error('Error loading question:', error);
+                    alert('Error loading question. Please try again.');
+                });
+        }
+        
+        // Update navigation buttons based on current position
+        function updateNavButtons() {
+            document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
+            document.getElementById('next-btn').disabled = (currentQuestionIndex === totalQuestions - 1);
+        }
+        
+        // Clear option selection
+        function clearOptionSelection() {
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+        
+        // Select an option
+        function selectOption(option, saveAnswer = true) {
+            // Clear previous selection
+            clearOptionSelection();
+            
+            // Highlight selected option
+            document.getElementById(`option-${option}`).classList.add('selected');
+            
+            // Save the answer
+            if (saveAnswer) {
+                userAnswers[currentQuestionIndex] = option;
+                
+                // Save to server
+                saveCurrentAnswer();
+                
+                // Update question navigation
+                updateQuestionNav();
+            }
+        }
+        
+        // Save current answer to server
+        // Save current answer to server
+function saveCurrentAnswer() {
+    const answer = userAnswers[currentQuestionIndex];
+    
+    if (answer !== undefined) {
+        console.log(`Saving answer for question ${currentQuestionIndex}: ${answer}`);
+        
+        fetch('/save_answer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                question_num: currentQuestionIndex,
+                answer: answer
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Answer saved successfully:", data);
+            // Update UI to show saved status if needed
+            updateQuestionNav();
+        })
+        .catch(error => {
+            console.error('Error saving answer:', error);
+        });
+    }
+}
+
+// Select an option
+function selectOption(option, saveAnswer = true) {
+    console.log(`Selected option ${option} for question ${currentQuestionIndex}`);
+    
+    // Clear previous selection
+    clearOptionSelection();
+    
+    // Highlight selected option
+    document.getElementById(`option-${option}`).classList.add('selected');
+    
+    // Save the answer
+    if (saveAnswer) {
+        userAnswers[currentQuestionIndex] = option;
+        console.log(`Updated userAnswers:`, userAnswers);
+        
+        // Save to server
+        saveCurrentAnswer();
+        
+        // Update question navigation
+        updateQuestionNav();
+    }
+}
+        
+        // Go to next question
+        function nextQuestion() {
+            if (currentQuestionIndex < totalQuestions - 1) {
+                loadQuestion(currentQuestionIndex + 1);
+            }
+        }
+        
+        // Go to previous question
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                loadQuestion(currentQuestionIndex - 1);
+            }
+        }
+        
+        // Fetch all saved answers from server
+        function fetchAllAnswers() {
+            fetch('/get_all_answers')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.answers) {
+                        // Update userAnswers from server data
+                        for (const [index, value] of Object.entries(data.answers)) {
+                            if (value !== "") {
+                                userAnswers[parseInt(index)] = value;
+                            }
+                        }
+                        // Update navigation UI
+                        updateQuestionNav();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching answers:', error);
+                });
+        }
+        
+        // Start the countdown timer
+        function startTimer() {
+            // Check if there's a saved remaining time
+            const savedTime = localStorage.getItem(`examTime_${sessionStorage.getItem('username')}_${sessionStorage.getItem('subject_id')}`);
+            if (savedTime) {
+                secondsRemaining = parseInt(savedTime);
+            }
+            
+            timer = setInterval(function() {
+                secondsRemaining--;
+                
+                // Save time to localStorage
+                localStorage.setItem(`examTime_${sessionStorage.getItem('username')}_${sessionStorage.getItem('subject_id')}`, secondsRemaining.toString());
+                
+                if (secondsRemaining <= 0) {
+                    clearInterval(timer);
+                    submitTest(true);
+                    return;
+                }
+                
+                const minutes = Math.floor(secondsRemaining / 60);
+                const seconds = secondsRemaining % 60;
+                document.getElementById('countdown').innerHTML = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Change color when less than 5 minutes
+                if (secondsRemaining < 300) {
+                    document.getElementById('countdown').style.color = '#dc3545';
+                }
+            }, 1000);
+        }
+        
+        // Confirm before submitting test
+        function confirmSubmit() {
+            const answeredCount = Object.keys(userAnswers).filter(key => userAnswers[key] !== "").length;
+            const unansweredCount = totalQuestions - answeredCount;
+            
+            let message = `Are you sure you want to submit your test?`;
+            if (unansweredCount > 0) {
+                message += `\n\nYou have ${unansweredCount} unanswered question(s).`;
+            }
+            
+            if (confirm(message)) {
+                submitTest(false);
+            }
+        }
+        
+        // Submit the test
+        function submitTest(timeExpired = false) {
+            // Save current answer
+            saveCurrentAnswer();
+            
+            // Stop the timer
+            clearInterval(timer);
+            
+            // Remove time from localStorage
+            localStorage.removeItem(`examTime_${sessionStorage.getItem('username')}_${sessionStorage.getItem('subject_id')}`);
+            
+            // Submit to server
+            fetch('/submit_test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    time_expired: timeExpired
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                // Hide question container
+                document.getElementById('question-container').style.display = 'none';
+                
+                // Show result
+                document.getElementById('result-container').style.display = 'block';
+                document.getElementById('result-text').innerHTML = 
+                    `You scored ${data.score}% (${data.correct_answers}/${data.total_questions})`;
+                
+                // Hide timer
+                document.getElementById('countdown').style.display = 'none';
+                
+                // Hide question navigation
+                document.querySelector('.question-nav-container').style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error submitting test:', error);
+                alert('Error submitting test. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>

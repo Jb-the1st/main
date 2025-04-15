@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Questions for {{ subject.subject_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Questions for: {{ subject.subject_name }}</h1>
+        
+        <div class="admin-nav">
+            <a href="{{ url_for('admin_dashboard') }}">Users</a> | 
+            <a href="{{ url_for('manage_subjects') }}">Subjects</a> |
+            <a href="{{ url_for('admin_logout') }}">Logout</a>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Upload Questions Form -->
+        <div class="form-section">
+            <h2>Upload Questions (CSV)</h2>
+            <form method="POST" action="{{ url_for('upload_questions', subject_id=subject_id) }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="question_file">CSV File:</label>
+                    <input type="file" id="question_file" name="question_file" accept=".csv" required>
+                </div>
+                <div class="info-text">
+                    <p>CSV should have columns: question, option_a, option_b, option_c, option_d, answer</p>
+                </div>
+                <button type="submit">Upload Questions</button>
+            </form>
+        </div>
+        
+        <!-- Add Single Question Form -->
+        <div class="form-section">
+            <h2>Add Question</h2>
+            <form method="POST" action="{{ url_for('add_question', subject_id=subject_id) }}">
+                <div class="form-group">
+                    <label for="question">Question:</label>
+                    <textarea id="question" name="question" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="option_a">Option A:</label>
+                    <input type="text" id="option_a" name="option_a" required>
+                </div>
+                <div class="form-group">
+                    <label for="option_b">Option B:</label>
+                    <input type="text" id="option_b" name="option_b" required>
+                </div>
+                <div class="form-group">
+                    <label for="option_c">Option C:</label>
+                    <input type="text" id="option_c" name="option_c" required>
+                </div>
+                <div class="form-group">
+                    <label for="option_d">Option D:</label>
+                    <input type="text" id="option_d" name="option_d" required>
+                </div>
+                <div class="form-group">
+                    <label for="answer">Correct Answer:</label>
+                    <select id="answer" name="answer" required>
+                        <option value="option_a">A</option>
+                        <option value="option_b">B</option>
+                        <option value="option_c">C</option>
+                        <option value="option_d">D</option>
+                    </select>
+                </div>
+                <button type="submit">Add Question</button>
+            </form>
+        </div>
+        
+        <!-- Question List -->
+        <div class="list-section">
+            <h2>Current Questions ({{ questions|length }})</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Question</th>
+                        <th>Options</th>
+                        <th>Answer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if questions %}
+                        {% for question in questions %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ question.question }}</td>
+                                <td>
+                                    A: {{ question.option_a }}<br>
+                                    B: {{ question.option_b }}<br>
+                                    C: {{ question.option_c }}<br>
+                                    D: {{ question.option_d }}
+                                </td>
+                                <td>{{ question.answer.split('_')[1]|upper }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4">No questions found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

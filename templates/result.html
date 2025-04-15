@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        thead {
+            background-color: #f8f9fa;
+        }
+        tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .score-cell {
+            font-weight: bold;
+        }
+        .high-score {
+            color: #28a745;
+        }
+        .medium-score {
+            color: #ffc107;
+        }
+        .low-score {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Exam Results for {{ username }}</h2>
+            <div>
+                <a href="{{ url_for('home') }}" class="btn btn-primary">Back to Home</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+        
+        {% if results %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                        <tr>
+                            <td>{{ result.subject_name }}</td>
+                            <td class="score-cell 
+                                {% if result.score >= 70 %}high-score
+                                {% elif result.score >= 50 %}medium-score
+                                {% else %}low-score{% endif %}">
+                                {{ result.score }}%
+                            </td>
+                            <td>
+                                {% if result.score >= 70 %}
+                                    <span class="badge bg-success">Pass</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Fail</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info">
+                You haven't taken any exams yet.
+            </div>
+        {% endif %}
+        <div class="btn-print">
+            <button onclick="window.print()">Print Result</button>
+        </div>
+    </div>
+</body>
+</html>

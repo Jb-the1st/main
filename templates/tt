@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBT Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Computer-Based Test</h1>
+       <h2> Welcome, {{ username }}!</h2>
+        <div id="question-box">
+            <p id="question-text">Loading...</p>
+            <form id="options-form">
+                <label><input type="radio" name="option" value="a"> <span id="option_a"></span></label><br>
+                <label><input type="radio" name="option" value="b"> <span id="option_b"></span></label><br>
+                <label><input type="radio" name="option" value="c"> <span id="option_c"></span></label><br>
+                <label><input type="radio" name="option" value="d"> <span id="option_d"></span></label><br>
+                <button type="button" onclick="submitAnswer()">Submit</button>
+            </form>
+        </div>
+        <p id="score-display"></p>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+    <script>
+        function loadQuestion() {
+            fetch("/get_question")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        document.getElementById("question-box").innerHTML = `
+                            <h2>Test Completed</h2>
+                            <p>Your Score: ${data.score} out of ${data.total_questions}</p>
+                        `;
+                        return;
+                    }
+                    document.getElementById("question-text").innerText = data.question;
+                    document.getElementById("option_a").innerText = data.option_a;
+                    document.getElementById("option_b").innerText = data.option_b;
+                    document.getElementById("option_c").innerText = data.option_c;
+                    document.getElementById("option_d").innerText = data.option_d;
+
+                    document.querySelectorAll('input[name="option"]').forEach(input => input.checked = false);
+                })
+                .catch(error => {
+                    console.error("Error fetching question:", error);
+                });
+        }
+
+        function submitAnswer() {
+            let selectedOption = document.querySelector('input[name="option"]:checked');
+            if (!selectedOption) {
+                alert("Please select an answer!");
+                return;
+            }
+
+            fetch(`/submit_answer?answer=${selectedOption.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.next_question) {
+                        loadQuestion();
+                    } else {
+                        document.getElementById("question-box").innerHTML = `
+                            <h2>Test Completed</h2>
+                            <p>Your Score: ${data.score} out of ${data.total_questions}</p>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error submitting answer:", error);
+                });
+        }
+
+        fetch("/get_score")
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    document.getElementById("score-display").innerText = data.message;
+                } else {
+                    document.getElementById("score-display").innerText = "Your Score: " + data.score;
+                }
+            });
+
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>

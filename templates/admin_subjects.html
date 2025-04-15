@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Subject Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Subject Management</h1>
+        
+        <div class="admin-nav">
+            <a href="{{ url_for('admin_dashboard') }}">Users</a> | 
+            <a href="{{ url_for('manage_subjects') }}">Subjects</a> |
+            <a href="{{ url_for('admin_logout') }}">Logout</a>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Add Subject Form -->
+        <div class="form-section">
+            <h2>Add New Subject</h2>
+            <form method="POST" action="{{ url_for('manage_subjects') }}">
+                <div class="form-group">
+                    <label for="subject_name">Subject Name:</label>
+                    <input type="text" id="subject_name" name="subject_name" required>
+                </div>
+                <button type="submit">Add Subject</button>
+            </form>
+        </div>
+        
+        <!-- Subject List -->
+        <div class="list-section">
+            <h2>Existing Subjects</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Subject Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if subjects %}
+                        {% for subject in subjects %}
+                            <tr>
+                                <td>{{ subject.id }}</td>
+                                <td>{{ subject.subject_name }}</td>
+                                <td>
+                                    <a href="{{ url_for('view_questions', subject_id=subject.id) }}">Manage Questions</a> | 
+                                    <a href="{{ url_for('delete_subject', subject_id=subject.id) }}" onclick="return confirm('Are you sure? This will delete all questions and scores for this subject.')">Delete</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3">No subjects found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
