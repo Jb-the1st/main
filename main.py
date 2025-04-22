@@ -8,10 +8,11 @@ import csv
 app = Flask(__name__)
 app.secret_key = "b@0J98!xZq#P$T2&k7rM"
 # MySQL Configuration
-app.config["MYSQL_HOST"] = os.getenv("DB_HOST")
-app.config["MYSQL_USER"] = os.getenv("DB_USER")
-app.config["MYSQL_PASSWORD"] = os.getenv("DB_PASSWORD")
-app.config["MYSQL_DB"] = os.getenv("DB_NAME")
+app.config["MYSQL_HOST"] = "b8gqfahoe4si97cggnha-mysql.services.clever-cloud.com"
+app.config["MYSQL_USER"] = "uementg4xw74zkj3"
+app.config["MYSQL_PASSWORD"] = "Ggkg1ynqrIk7hvIuMRti"
+app.config["MYSQL_DB"] = "b8gqfahoe4si97cggnha"
+app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 mysql = MySQL(app)
 
 # Load questions from CSV file
