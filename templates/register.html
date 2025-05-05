@@ -1,19 +1,302 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}"> -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        .login-container {
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.75);
+            border-radius: 12px;
+            border: 1px solid rgba(209, 213, 219, 0.3);
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.2);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: all 0.5s ease;
+        }
+        
+        .login-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 1);
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus + .input-icon {
+            color: #6366f1;
+        }
+        
+        .btn-login {
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(99, 102, 241, 0.4);
+            background: linear-gradient(45deg, #8b5cf6, #6366f1);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .floating-balls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .floating-balls li {
+            position: absolute;
+            display: block;
+            list-style: none;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            animation: floating 25s linear infinite;
+            bottom: -150px;
+            border-radius: 50%;
+        }
+        
+        .floating-balls li:nth-child(1) {
+            left: 25%;
+            width: 80px;
+            height: 80px;
+            animation-delay: 0s;
+        }
+        
+        .floating-balls li:nth-child(2) {
+            left: 10%;
+            width: 20px;
+            height: 20px;
+            animation-delay: 2s;
+            animation-duration: 12s;
+        }
+        
+        .floating-balls li:nth-child(3) {
+            left: 70%;
+            width: 20px;
+            height: 20px;
+            animation-delay: 4s;
+        }
+        
+        .floating-balls li:nth-child(4) {
+            left: 40%;
+            width: 60px;
+            height: 60px;
+            animation-delay: 0s;
+            animation-duration: 18s;
+        }
+        
+        .floating-balls li:nth-child(5) {
+            left: 65%;
+            width: 20px;
+            height: 20px;
+            animation-delay: 0s;
+        }
+        
+        .floating-balls li:nth-child(6) {
+            left: 75%;
+            width: 110px;
+            height: 110px;
+            animation-delay: 3s;
+        }
+        
+        .floating-balls li:nth-child(7) {
+            left: 35%;
+            width: 150px;
+            height: 150px;
+            animation-delay: 7s;
+        }
+        
+        .floating-balls li:nth-child(8) {
+            left: 50%;
+            width: 25px;
+            height: 25px;
+            animation-delay: 15s;
+            animation-duration: 45s;
+        }
+        
+        .floating-balls li:nth-child(9) {
+            left: 20%;
+            width: 15px;
+            height: 15px;
+            animation-delay: 2s;
+            animation-duration: 35s;
+        }
+        
+        .floating-balls li:nth-child(10) {
+            left: 85%;
+            width: 150px;
+            height: 150px;
+            animation-delay: 0s;
+            animation-duration: 11s;
+        }
+        
+        @keyframes floating {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+                border-radius: 0;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+                opacity: 0;
+                border-radius: 50%;
+            }
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-password:hover {
+            color: #6366f1;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <h2>Register</h2>
-        <form method="POST" action="/register">
-            <input type="text" name="username" placeholder="Username" required><br>
-            <input type="password" name="password" placeholder="Password" required><br>
-            <button type="submit">Register</button>
-        </form>
-        <p>Already have an account? <a href="/login">Login</a></p>
-    </div>
+<body class="flex items-center justify-center">
+        <div class="floating-balls">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </div>
+        <div class="login-container w-full max-w-md mx-4 p-8">
+            <h1 class="text-2xl font-bold text-center mb-6">Register</h1>
+            {% if error %}
+                <div class="error-message">{{ error }}</div>
+            {% endif %}
+            <form method="POST" action="/register">
+                <div class="input-group">
+                    <input type="text" name="username" class="input-field" placeholder="Username" required>
+                    <i class="fas fa-user input-icon"></i>
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" class="input-field" placeholder="Password" required>
+                    <i class="fas fa-lock input-icon"></i>
+                    <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+                </div>
+                <button type="submit" class="btn-login">Register</button>
+                <p class="text-center mt-4">Already have an account? <a href="/login" class="text-blue-500">Login</a></p>
+            </form>
+    </div> 
+    <script>
+        function togglePassword() {
+            const password = document.getElementById('password');
+            const icon = document.querySelector('.toggle-password');
+            
+            if (password.type === 'password') {
+                password.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                password.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // Add floating animation to login container
+        document.querySelector('.login-container').addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            document.querySelector('.login-container').style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+        
+        // Reset transform when mouse leaves
+        document.querySelector('.login-container').addEventListener('mouseleave', () => {
+            document.querySelector('.login-container').style.transform = 'rotateY(0deg) rotateX(0deg)';
+        });
+    </script>
 </body>
 </html>
