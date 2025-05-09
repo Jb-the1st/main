@@ -46,6 +46,35 @@
             height: 6px;
             transition: width 0.5s ease;
         }
+        
+        .flagged-question {
+            position: relative;
+        }
+        
+        .flagged-question::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background-color: #f59e0b;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        .flag-btn.active {
+            color: #f59e0b;
+        }
+        
+        .flag-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .filter-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-50">
@@ -103,6 +132,22 @@
                 </div>
             </div>
 
+            <!-- Question Filters -->
+            <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-wrap gap-2">
+                <button id="filter-all" class="filter-btn px-3 py-1 rounded-full border border-gray-300 text-sm font-medium transition-colors active" onclick="filterQuestions('all')">
+                    All Questions
+                </button>
+                <button id="filter-answered" class="filter-btn px-3 py-1 rounded-full border border-gray-300 text-sm font-medium transition-colors" onclick="filterQuestions('answered')">
+                    <i class="fas fa-check-circle mr-1 text-green-500"></i> Answered
+                </button>
+                <button id="filter-unanswered" class="filter-btn px-3 py-1 rounded-full border border-gray-300 text-sm font-medium transition-colors" onclick="filterQuestions('unanswered')">
+                    <i class="fas fa-question-circle mr-1 text-gray-500"></i> Unanswered
+                </button>
+                <button id="filter-flagged" class="filter-btn px-3 py-1 rounded-full border border-gray-300 text-sm font-medium transition-colors" onclick="filterQuestions('flagged')">
+                    <i class="fas fa-flag mr-1 text-yellow-500"></i> Flagged
+                </button>
+            </div>
+
             <!-- Question Navigation -->
             <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -117,7 +162,12 @@
             <div id="question-container" class="bg-white rounded-xl shadow-sm p-6 mb-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 id="question-number" class="text-lg font-semibold text-blue-600">Question 1</h3>
-                    <span id="question-status" class="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600">Unanswered</span>
+                    <div class="flex items-center space-x-4">
+                        <span id="question-status" class="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600">Unanswered</span>
+                        <button id="flag-btn" class="flag-btn text-gray-400 hover:text-yellow-500 transition-all" onclick="toggleFlag()" title="Flag for review">
+                            <i class="fas fa-flag"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <p id="question-text" class="text-gray-800 text-lg mb-8 leading-relaxed">Loading question...</p>
@@ -189,8 +239,10 @@
         let currentQuestionIndex = 0;
         let totalQuestions = parseInt('{{ total_questions|default(0) }}');
         let userAnswers = {};
+        let flaggedQuestions = {};
         let timer;
         let secondsRemaining = 5 * 60; // 5 minutes for demo (change to 30*60 for production)
+        let currentFilter = 'all';
 
         // Initialize the page
         window.onload = function() {
@@ -207,12 +259,13 @@
             // Start the timer
             startTimer();
 
-            // Get any saved answers
+            // Get any saved answers and flags
             fetchAllAnswers();
+            fetchAllFlags();
 
             // Update the submit button display
             document.getElementById('submit-btn').style.display = 'none';
-            
+                    
             // Update progress
             updateProgress();
         };
@@ -242,6 +295,9 @@
                 // Reset all classes
                 btn.className = 'question-number flex items-center justify-center w-10 h-10 rounded-lg cursor-pointer font-medium';
                 
+                // Remove flagged indicator
+                btn.classList.remove('flagged-question');
+
                 if (index === currentQuestionIndex) {
                     btn.classList.add('bg-blue-100', 'text-blue-600', 'border-2', 'border-blue-300');
                 } else if (userAnswers[index] !== undefined && userAnswers[index] !== '') {
@@ -249,11 +305,27 @@
                 } else {
                     btn.classList.add('bg-gray-100', 'text-gray-600', 'border-2', 'border-gray-200');
                 }
+
+                // Add flagged indicator if question is flagged
+                if (flaggedQuestions[index]) {
+                    btn.classList.add('flagged-question');
+                }
+
+                // Apply filter
+                if (currentFilter === 'answered' && (userAnswers[index] === undefined || userAnswers[index] === '')) {
+                    btn.style.display = 'none';
+                } else if (currentFilter === 'unanswered' && (userAnswers[index] !== undefined && userAnswers[index] !== '')) {
+                    btn.style.display = 'none';
+                } else if (currentFilter === 'flagged' && !flaggedQuestions[index]) {
+                    btn.style.display = 'none';
+                } else {
+                    btn.style.display = 'flex';
+                }
             });
 
             // Update progress
             updateProgress();
-            
+                    
             // Show submit button only when on the last question
             if (currentQuestionIndex === totalQuestions - 1) {
                 document.getElementById('submit-btn').style.display = 'flex';
@@ -264,11 +336,24 @@
             }
         }
 
+        // Filter questions based on status
+        function filterQuestions(filter) {
+            currentFilter = filter;
+            
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`filter-${filter}`).classList.add('active');
+            
+            updateQuestionNav();
+        }
+
         // Update progress bar and text
         function updateProgress() {
             const answeredCount = Object.keys(userAnswers).filter(key => userAnswers[key] !== "").length;
             const progressPercentage = (answeredCount / totalQuestions) * 100;
-            
+                    
             document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
             document.getElementById('progress-text').textContent = `${answeredCount}/${totalQuestions}`;
         }
@@ -277,6 +362,7 @@
         function loadQuestion(questionNum) {
             // Save current answer before moving
             saveCurrentAnswer();
+            saveCurrentFlag();
 
             // Update current question index
             currentQuestionIndex = questionNum;
@@ -317,6 +403,9 @@
                         document.getElementById('question-status').textContent = 'Unanswered';
                         document.getElementById('question-status').className = 'text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600';
                     }
+
+                    // Update flag button
+                    updateFlagButton(questionNum);
 
                     // Update navigation buttons
                     updateNavButtons();
@@ -372,6 +461,43 @@
             }
         }
 
+        // Toggle flag for current question
+        function toggleFlag() {
+            const questionNum = currentQuestionIndex;
+            const flagBtn = document.getElementById('flag-btn');
+            
+            if (flaggedQuestions[questionNum]) {
+                // Unflag the question
+                flaggedQuestions[questionNum] = false;
+                flagBtn.classList.remove('active');
+                flagBtn.innerHTML = '<i class="fas fa-flag"></i>';
+            } else {
+                // Flag the question
+                flaggedQuestions[questionNum] = true;
+                flagBtn.classList.add('active');
+                flagBtn.innerHTML = '<i class="fas fa-flag"></i>';
+            }
+            
+            // Save to server
+            saveCurrentFlag();
+            
+            // Update navigation
+            updateQuestionNav();
+        }
+
+        // Update flag button based on current question status
+        function updateFlagButton(questionNum) {
+            const flagBtn = document.getElementById('flag-btn');
+            
+            if (flaggedQuestions[questionNum]) {
+                flagBtn.classList.add('active');
+                flagBtn.innerHTML = '<i class="fas fa-flag"></i>';
+            } else {
+                flagBtn.classList.remove('active');
+                flagBtn.innerHTML = '<i class="fas fa-flag"></i>';
+            }
+        }
+
         // Save current answer to server
         function saveCurrentAnswer() {
             const answer = userAnswers[currentQuestionIndex];
@@ -401,6 +527,35 @@
                     console.error('Error saving answer:', error);
                 });
             }
+        }
+
+        // Save current flag to server
+        function saveCurrentFlag() {
+            const isFlagged = flaggedQuestions[currentQuestionIndex] || false;
+
+            fetch('/save_flag', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question_num: currentQuestionIndex,
+                    is_flagged: isFlagged
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Flag saved successfully:", data);
+                updateQuestionNav();
+            })
+            .catch(error => {
+                console.error('Error saving flag:', error);
+            });
         }
 
         // Go to next question
@@ -443,6 +598,30 @@
                 });
         }
 
+        // Fetch all saved flags from server
+        function fetchAllFlags() {
+            fetch('/get_all_flags')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.flags) {
+                        // Update flaggedQuestions from server data
+                        for (const [index, value] of Object.entries(data.flags)) {
+                            flaggedQuestions[parseInt(index)] = value;
+                        }
+                        // Update navigation UI
+                        updateQuestionNav();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching flags:', error);
+                });
+        }
+
         // Start the countdown timer
         function startTimer() {
             // Check if there's a saved remaining time
@@ -481,10 +660,14 @@
         function confirmSubmit() {
             const answeredCount = Object.keys(userAnswers).filter(key => userAnswers[key] !== "").length;
             const unansweredCount = totalQuestions - answeredCount;
+            const flaggedCount = Object.keys(flaggedQuestions).filter(key => flaggedQuestions[key]).length;
 
             let message = `Are you sure you want to submit your test?`;
             if (unansweredCount > 0) {
                 message += `\n\nYou have ${unansweredCount} unanswered question(s).`;
+            }
+            if (flaggedCount > 0) {
+                message += `\nYou have ${flaggedCount} flagged question(s) for review.`;
             }
 
             // Create a custom modal instead of using default confirm
@@ -495,8 +678,9 @@
 
         // Submit the test
         function submitTest(timeExpired = false) {
-            // Save current answer
+            // Save current answer and flag
             saveCurrentAnswer();
+            saveCurrentFlag();
 
             // Stop the timer
             clearInterval(timer);
