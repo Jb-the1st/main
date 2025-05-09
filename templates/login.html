@@ -257,7 +257,7 @@
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert alert-danger">{{ message }}</div>
+                    <div class="text-3xl font-bold text-gray-800 mb-2">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}

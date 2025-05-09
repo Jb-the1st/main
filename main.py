@@ -1,12 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from functools import wraps
 from flask_mysqldb import MySQL
+from flask_bcrypt import Bcrypt
 import random
 import os
 import csv
 
 app = Flask(__name__)
 app.secret_key = "b@0J98!xZq#P$T2&k7rM"
+bcrypt = Bcrypt(app)
 # MySQL Configuration
 app.config["MYSQL_HOST"] = "b8gqfahoe4si97cggnha-mysql.services.clever-cloud.com"
 app.config["MYSQL_USER"] = "uementg4xw74zkj3"
@@ -132,10 +134,12 @@ def register():
             cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
             mysql.connection.commit()
         except Exception as e:
-            return "Error: " + str(e)
+            flash("Username is already in use", "error")
+            # return "Error: " + str(e)
+            return redirect(url_for("register"))
         finally:
             cur.close()
-        return redirect(url_for("login"))
+        flash("Registration successful! You can now log in.", "success")
     return render_template("register.html")
 
 @app.route("/logout")
