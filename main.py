@@ -10,11 +10,22 @@ app = Flask(__name__)
 app.secret_key = "b@0J98!xZq#P$T2&k7rM"
 # bcrypt = Bcrypt(app)
 # MySQL Configuration
-app.config["MYSQL_HOST"] = "b8gqfahoe4si97cggnha-mysql.services.clever-cloud.com"
-app.config["MYSQL_USER"] = "uementg4xw74zkj3"
-app.config["MYSQL_PASSWORD"] = "Ggkg1ynqrIk7hvIuMRti"
-app.config["MYSQL_DB"] = "b8gqfahoe4si97cggnha"
-app.config["MYSQL_CURSORCLASS"] = "DictCursor"
+development = False  # Set to True for local development, False for production
+if development:
+    # Local database config
+    app.config['MYSQL_HOST'] = 'localhost'
+    app.config['MYSQL_USER'] = 'root'
+    app.config['MYSQL_PASSWORD'] = ''
+    app.config['MYSQL_DB'] = 'flask_auth'
+    app.config["MYSQL_CURSORCLASS"] = "DictCursor"
+else:
+    # Production database config
+    app.config["MYSQL_HOST"] = "b8gqfahoe4si97cggnha-mysql.services.clever-cloud.com"
+    app.config["MYSQL_USER"] = "uementg4xw74zkj3"
+    app.config["MYSQL_PASSWORD"] = "Ggkg1ynqrIk7hvIuMRti"
+    app.config["MYSQL_DB"] = "b8gqfahoe4si97cggnha"
+    app.config["MYSQL_CURSORCLASS"] = "DictCursor"
+
 mysql = MySQL(app)
 
 # Load questions from CSV file

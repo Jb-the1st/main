@@ -1,21 +1,11 @@
 question,option_a,option_b,option_c,option_d,answer
-Decimal equivalent of binary number 1010 is? ,11, A ,10, None of the above,option_c
-Which of the number is not allowed in Binary representation of a number? ,0,1,2, None of the above,option_c
-"Given the sets A= {1, 3, 5}, B= {2,4,6} and C={0, 2,4,6.8}, which of the following may be considered as universal set for all the three sets A, B and C? ","{0, 1, 2, 3, 4, 5, 6} ", f ," {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10} "," { 1, 2, 3, 4, 5, 6, 7, 8}",option_c
-Which of the following is correct for A � B? , A n B   , A1 n B  , A n B1  , A1 n B1,option_c
-What is value of (0.000001)? ? ,0.000001,0.001, 1/100  ,0.1,option_c
-How many zeroes are there in 200010? ,10,30,20,15,option_b
-What is value of 2(-2)2 ?, 1/16  ,  1/8  ,32,16,option_a
-"If (3/5)x  = 81/625, then what is the value of Xx ?",16,256,0,32,option_b
-"If A= 83 x 54   and B= 85 x 53 , then what is the value of A x B? ", 216 x 58  , 824 x 57  , 424 x 57  , 224 x 57,option_d
-What is the standard form of 80460000? , 8.046 � 107  , 8.046 � 106  , 8.046 � 109  , 8.046 � 108,option_a
-Convert 134four to base two , 34ten  ,23ten  ,32ten   , 29ten,option_c
-A set that has one element is called  , Finite set   , singleton set  , Superset   , single element set,option_b
-All are improper fractions except , �  , 9/7  , 5/3  , 11/5,option_a
-Evaluate 4x=32 , x=2    , x=2/5   , x=1/3   , x=5/2,option_d
-Simplify 3/5?2 , 3?2/10   , ?2/12  , 5?2  , 7?2/5,option_a
-Round off 1234.56 to the nearest hundred ,1230,1200,1234,1000,option_b
-Express 0.165 in the standard form , 1.65 x 10-1      , 1.65 x 10-3   , 0.165 x10-1      , 165 x 103,option_a
-Simplify 4-3/2 ,2,3,3-Feb,22,option_c
-Evaluate (7+2?3) ,27,37,31,29,option_b
-A set with countable number of element is , countable set  , finite set  , superset   , subset,option_b
+Which of the following structures is responsible for bacterial movement?, Pili, Capsule, Flagella, Ribosomes,option_c
+What is the composition of the bacterial cell wall in most bacteria?, Cellulose, Peptidoglycan, Chitin, Lipids,option_b
+Which bacterial shape is Escherichia coli classified under?, Coccus, Bacillus, Spirillum, Vibrio,option_b
+Which type of bacteria obtains energy from sunlight for photosynthesis?, Chemoautotrophs, Photoautotrophs, Saprophytic, Parasitic,option_b
+What is the primary function of bacterial ribosomes?, Energy production, Protein synthesis, DNA replication, Movement,option_b
+Which of the following bacteria has a spiral shape?, Bacillus subtilis, Streptococcus, Spirillum volutans, Vibrio cholerae,option_c
+Which structure in bacteria helps in attachment to surfaces and genetic exchange?, Pili and fimbriae, Nucleoid, Capsule, Plasma membrane,option_a
+Which bacteria live in a mutually beneficial relationship with plants?, Mycobacterium tuberculosis, Rhizobium, Vibrio cholerae, Staphylococcus aureus,option_b
+Which type of bacteria feeds on dead organic matter?, Parasitic, Saprophytic, Symbiotic, Chemoautotrophs,option_b
+Which bacterial structure contains genetic material?, Nucleoid, Capsule, Flagella, Cytoplasm,option_a
