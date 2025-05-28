@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            transition: all 0.3s;
+        }
+        .sidebar-collapsed {
+            width: 80px;
+        }
+        .sidebar-collapsed .nav-text {
+            display: none;
+        }
+        .sidebar-collapsed .logo-text {
+            display: none;
+        }
+        .sidebar-collapsed .nav-item {
+            justify-content: center;
+        }
+        .main-content {
+            transition: all 0.3s;
+        }
+        .sidebar-collapsed + .main-content {
+            margin-left: 80px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar bg-indigo-800 text-white w-64 fixed h-full overflow-y-auto">
+            <div class="p-4 flex items-center space-x-3">
+                <i class="fas fa-graduation-cap text-2xl"></i>
+                <span class="logo-text text-xl font-bold">Admin Panel</span>
+            </div>
+            <nav class="mt-6">
+                <div class="px-4 py-2 text-indigo-200 uppercase text-xs font-semibold tracking-wider">
+                    Navigation
+                </div>
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-item flex items-center px-4 py-3 text-white hover:bg-indigo-700 transition">
+                    <i class="fas fa-users mr-3"></i>
+                    <span class="nav-text">Users</span>
+                </a>
+                <a href="{{ url_for('manage_subjects') }}" class="nav-item flex items-center px-4 py-3 text-white hover:bg-indigo-700 transition">
+                    <i class="fas fa-book mr-3"></i>
+                    <span class="nav-text">Subjects</span>
+                </a>
+                <a href="{{ url_for('admin_analytics') }}" class="nav-item flex items-center px-4 py-3 text-white bg-indigo-900 transition">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <div class="px-4 py-2 text-indigo-200 uppercase text-xs font-semibold tracking-wider mt-4">
+                    Account
+                </div>
+                <a href="{{ url_for('admin_logout') }}" class="nav-item flex items-center px-4 py-3 text-white hover:bg-indigo-700 transition">
+                    <i class="fas fa-sign-out-alt mr-3"></i>
+                    <span class="nav-text">Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content ml-64 flex-1 overflow-y-auto">
+            <header class="bg-white shadow-sm">
+                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-gray-800">Analytics Dashboard</h1>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-gray-600">Welcome, Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <a href="{{ url_for('admin_dashboard') }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                    {% for subject in subjects_data %}
+                    <div class="bg-white shadow overflow-hidden rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-lg font-medium text-gray-900">{{ subject.subject_name }}</h2>
+                        </div>
+                        <div class="px-6 py-4">
+                            <p class="text-sm text-gray-500">
+                                <strong>Students:</strong> {{ subject.total_users }}<br>
+                                <strong>Average Score:</strong> {{ subject.average_score | round(2) }}%<br>
+                                <strong>Highest Score:</strong> {{ subject.highest_score }}%<br>
+                                <strong>Lowest Score:</strong> {{ subject.lowest_score }}%
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Graph Section -->
+                <div class="mt-5">
+                    <h2 class="text-lg font-medium text-gray-900">Average Scores per Subject</h2>
+                    <canvas id="averageScoresChart"></canvas>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Prepare data for the graph
+        const subjects = JSON.parse('{{ subjects | tojson | safe }}');
+        const averageScores = JSON.parse('{{ avg_scores | tojson | safe }}');
+
+        const ctx = document.getElementById('averageScoresChart').getContext('2d');
+        const averageScoresChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: subjects,
+                datasets: [{
+                    label: 'Average Score (%)',
+                    data: averageScores,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)', // light blue bars
+                    borderColor: 'rgba(54, 162, 235, 1)', // dark blue borders
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Add active class to current nav item
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-item');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('bg-indigo-900');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

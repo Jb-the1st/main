@@ -45,13 +45,17 @@
                 <div class="px-4 py-2 text-indigo-200 uppercase text-xs font-semibold tracking-wider">
                     Navigation
                 </div>
-                <a href="{{ url_for('admin_dashboard') }}" class="nav-item flex items-center px-4 py-3 text-white hover:bg-indigo-700 transition">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-item flex items-center px-4 py-3 text-white hover:bg-indigo-900 transition">
                     <i class="fas fa-users mr-3"></i>
                     <span class="nav-text">Users</span>
                 </a>
                 <a href="{{ url_for('manage_subjects') }}" class="nav-item flex items-center px-4 py-3 text-white hover:bg-indigo-700 transition">
                     <i class="fas fa-book mr-3"></i>
                     <span class="nav-text">Subjects</span>
+                </a>
+                <a href="{{ url_for('admin_analytics') }}" class="nav-item flex items-center px-4 py-3 text-white hover:bg-indigo-700 transition">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    <span class="nav-text">Analytics</span>
                 </a>
                 <div class="px-4 py-2 text-indigo-200 uppercase text-xs font-semibold tracking-wider mt-4">
                     Account
@@ -90,7 +94,7 @@
                 <div class="bg-white shadow overflow-hidden rounded-lg mb-8">
                     <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                         <h2 class="text-lg font-medium text-gray-900">Users Management</h2>
-                        <a href="#" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Add New User</a>
+                        <a href="{{ url_for('register') }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Add New User</a>
                     </div>
                     <div class="table-responsive">
                         <table class="min-w-full divide-y divide-gray-200">

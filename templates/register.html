@@ -263,7 +263,7 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-            <form method="POST" action="/register">
+            <form method="POST" action="/admin/register" autocomplete="off">
                 <div class="input-group">
                     <input type="text" id="username" name="username" class="input-field" placeholder="Username" required>
                     <i class="fas fa-user input-icon"></i>
@@ -271,10 +271,9 @@
                 <div class="input-group">
                     <input type="password" id="password" name="password" class="input-field" placeholder="Password" required>
                     <i class="fas fa-lock input-icon"></i>
-                    <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+                    <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
                 </div>
                 <button type="submit" class="btn-login">Register</button>
-                <p class="text-center mt-4">Already have an account? <a href="/login" class="text-blue-500">Login</a></p>
             </form>
     </div> 
     <script>

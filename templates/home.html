@@ -15,8 +15,8 @@
         }
         
         .option:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
         
         .option.selected {
@@ -27,10 +27,13 @@
         
         .question-number {
             transition: all 0.2s ease;
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
         }
         
         .question-number:hover:not(.active) {
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
         
         .timer-pulse {
@@ -39,28 +42,24 @@
         
         @keyframes pulse {
             from { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
-            to { box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+            to { box-shadow: 0 0 0 4px rgba(220, 53, 69, 0); }
         }
         
         .progress-bar {
-            height: 6px;
+            height: 4px;
             transition: width 0.5s ease;
-        }
-        
-        .flagged-question {
-            position: relative;
         }
         
         .flagged-question::after {
             content: '';
             position: absolute;
-            top: -2px;
-            right: -2px;
-            width: 8px;
-            height: 8px;
+            top: -1px;
+            right: -1px;
+            width: 6px;
+            height: 6px;
             background-color: #f59e0b;
             border-radius: 50%;
-            border: 2px solid white;
+            border: 1px solid white;
         }
         
         .flag-btn.active {
@@ -75,46 +74,111 @@
             background-color: #3b82f6;
             color: white;
         }
+        
+        .sidebar {
+            width: 220px;
+            transition: all 0.3s ease;
+        }
+        
+        .main-content {
+            margin-left: 220px;
+            width: calc(100% - 220px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 180px;
+            }
+            .main-content {
+                margin-left: 180px;
+                width: calc(100% - 180px);
+            }
+        }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
+<body class="min-h-screen bg-gray-50 flex">
+    <!-- Sidebar Navigation -->
+    <div class="sidebar bg-white shadow-sm fixed h-full overflow-y-auto p-4">
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                <i class="fas fa-map-marked-alt mr-2 text-blue-500"></i> Questions
+            </h3>
+            <div class="question-nav grid grid-cols-4 gap-2" id="question-nav">
+                <!-- Question navigation buttons will be generated here -->
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2">Filters</h3>
+            <div class="flex flex-col gap-2">
+                <button id="filter-all" class="filter-btn px-2 py-1 rounded-full border border-gray-300 text-xs font-medium transition-colors active" onclick="filterQuestions('all')">
+                    All
+                </button>
+                <button id="filter-answered" class="filter-btn px-2 py-1 rounded-full border border-gray-300 text-xs font-medium transition-colors" onclick="filterQuestions('answered')">
+                    <i class="fas fa-check-circle mr-1 text-green-500 text-xs"></i> Answered
+                </button>
+                <button id="filter-unanswered" class="filter-btn px-2 py-1 rounded-full border border-gray-300 text-xs font-medium transition-colors" onclick="filterQuestions('unanswered')">
+                    <i class="fas fa-question-circle mr-1 text-gray-500 text-xs"></i> Unanswered
+                </button>
+                <button id="filter-flagged" class="filter-btn px-2 py-1 rounded-full border border-gray-300 text-xs font-medium transition-colors" onclick="filterQuestions('flagged')">
+                    <i class="fas fa-flag mr-1 text-yellow-500 text-xs"></i> Flagged
+                </button>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-2">Progress</h3>
+            <div class="w-full bg-gray-200 rounded-full h-1.5 mb-1">
+                <div id="progress-bar" class="progress-bar bg-blue-500 rounded-full" style="width: 0%"></div>
+            </div>
+            <span id="progress-text" class="text-xs font-medium text-gray-600">0/{{ total_questions }}</span>
+        </div>
+        
+        <div class="mt-auto">
+            <button id="submit-btn" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center w-full transition-colors" onclick="confirmSubmit()">
+                <i class="fas fa-paper-plane mr-2 text-xs"></i> Submit
+            </button>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content p-4">
         <!-- Header Section -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-white rounded-xl shadow-sm p-6">
-            <div class="mb-4 md:mb-0">
-                <h1 class="text-2xl font-bold text-gray-800">Exam Portal</h1>
-                <div class="flex items-center mt-2">
-                    <span class="text-gray-600 mr-4"><i class="fas fa-user mr-2"></i>{{ username }}</span>
-                    <span class="text-gray-600"><i class="fas fa-book mr-2"></i>{{ subject_name }}</span>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 bg-white rounded-lg shadow-sm p-4">
+            <div class="mb-2 md:mb-0">
+                <h1 class="text-lg font-bold text-gray-800">Exam Portal</h1>
+                <div class="flex items-center mt-1">
+                    <span class="text-xs text-gray-600 mr-3"><i class="fas fa-user mr-1 text-xs"></i>{{ username }}</span>
+                    <span class="text-xs text-gray-600"><i class="fas fa-book mr-1 text-xs"></i>{{ subject_name }}</span>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <div id="countdown" class="bg-red-50 text-red-600 px-4 py-2 rounded-full font-semibold flex items-center timer-pulse">
-                    <i class="fas fa-clock mr-2"></i>
+            <div class="flex items-center space-x-2">
+                <div id="countdown" class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-semibold flex items-center timer-pulse">
+                    <i class="fas fa-clock mr-1 text-xs"></i>
                     <span>05:00</span>
                 </div>
-                <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full flex items-center transition-colors">
-                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-xs flex items-center transition-colors">
+                    <i class="fas fa-sign-out-alt mr-1 text-xs"></i>Logout
                 </a>
             </div>
         </div>
-
+        
         {% if has_taken_exam %}
             <!-- Already Taken Exam Message -->
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-8">
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-4">
                 <div class="flex items-start">
                     <div class="flex-shrink-0">
-                        <i class="fas fa-info-circle text-blue-500 text-2xl"></i>
+                        <i class="fas fa-info-circle text-blue-500 text-xl"></i>
                     </div>
-                    <div class="ml-4">
-                        <h3 class="text-lg font-medium text-blue-800">Exam Completed</h3>
-                        <div class="mt-2 text-blue-700">
+                    <div class="ml-3">
+                        <h3 class="text-base font-medium text-blue-800">Exam Completed</h3>
+                        <div class="mt-1 text-blue-700 text-sm">
                             <p>You have already taken this exam.</p>
-                            <p class="font-bold mt-2">Your score: <span class="text-xl">{{ score }}%</span></p>
+                            <p class="font-bold mt-1">Your score: <span class="text-lg">{{ score }}%</span></p>
                         </div>
-                        <div class="mt-4">
-                            <a href="{{ url_for('view_result') }}" class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors">
-                                <i class="fas fa-poll mr-2"></i> View All Results
+                        <div class="mt-2">
+                            <a href="{{ url_for('view_result') }}" class="inline-flex items-center px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-xs transition-colors">
+                                <i class="fas fa-poll mr-1 text-xs"></i> View All Results
                             </a>
                         </div>
                     </div>
@@ -122,109 +186,69 @@
             </div>
         {% else %}
             <!-- Question Container -->
-            <div id="question-container" class="bg-white rounded-xl shadow-sm p-6 mb-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 id="question-number" class="text-lg font-semibold text-blue-600">Question 1</h3>
-                    <div class="flex items-center space-x-4">
-                        <span id="question-status" class="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600">Unanswered</span>
-                        <button id="flag-btn" class="flag-btn text-gray-400 hover:text-yellow-500 transition-all" onclick="toggleFlag()" title="Flag for review">
+            <div id="question-container" class="bg-white rounded-lg shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 id="question-number" class="text-base font-semibold text-blue-600">Question 1</h3>
+                    <div class="flex items-center space-x-2">
+                        <span id="question-status" class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Unanswered</span>
+                        <button id="flag-btn" class="flag-btn text-gray-400 hover:text-yellow-500 transition-all text-sm" onclick="toggleFlag()" title="Flag for review">
                             <i class="fas fa-flag"></i>
                         </button>
                     </div>
                 </div>
                 
-                <p id="question-text" class="text-gray-800 text-lg mb-8 leading-relaxed">Loading question...</p>
+                <p id="question-text" class="text-gray-800 text-sm mb-3 leading-relaxed">Loading question...</p>
                 
-                <div class="options-container grid grid-cols-1 gap-3">
-                    <div class="option p-4 border-2 border-gray-200 rounded-lg cursor-pointer transition-all" id="option-a" onclick="selectOption('a')">
+                <div class="options-container grid grid-cols-1 gap-2">
+                    <div class="option p-2 border border-gray-200 rounded-md cursor-pointer transition-all text-sm" id="option-a" onclick="selectOption('a')">
                         <div class="flex items-center">
-                            <span class="font-semibold mr-3 text-gray-600">A.</span>
+                            <span class="font-semibold mr-2 text-gray-600">A.</span>
                             <span id="option-a-text">Option A</span>
                         </div>
                     </div>
-                    <div class="option p-4 border-2 border-gray-200 rounded-lg cursor-pointer transition-all" id="option-b" onclick="selectOption('b')">
+                    <div class="option p-2 border border-gray-200 rounded-md cursor-pointer transition-all text-sm" id="option-b" onclick="selectOption('b')">
                         <div class="flex items-center">
-                            <span class="font-semibold mr-3 text-gray-600">B.</span>
+                            <span class="font-semibold mr-2 text-gray-600">B.</span>
                             <span id="option-b-text">Option B</span>
                         </div>
                     </div>
-                    <div class="option p-4 border-2 border-gray-200 rounded-lg cursor-pointer transition-all" id="option-c" onclick="selectOption('c')">
+                    <div class="option p-2 border border-gray-200 rounded-md cursor-pointer transition-all text-sm" id="option-c" onclick="selectOption('c')">
                         <div class="flex items-center">
-                            <span class="font-semibold mr-3 text-gray-600">C.</span>
+                            <span class="font-semibold mr-2 text-gray-600">C.</span>
                             <span id="option-c-text">Option C</span>
                         </div>
                     </div>
-                    <div class="option p-4 border-2 border-gray-200 rounded-lg cursor-pointer transition-all" id="option-d" onclick="selectOption('d')">
+                    <div class="option p-2 border border-gray-200 rounded-md cursor-pointer transition-all text-sm" id="option-d" onclick="selectOption('d')">
                         <div class="flex items-center">
-                            <span class="font-semibold mr-3 text-gray-600">D.</span>
+                            <span class="font-semibold mr-2 text-gray-600">D.</span>
                             <span id="option-d-text">Option D</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="nav-buttons flex justify-between mt-8">
-                    <button id="prev-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg flex items-center transition-colors" onclick="previousQuestion()" disabled>
-                        <i class="fas fa-arrow-left mr-2"></i> Previous
+                <div class="nav-buttons flex justify-between mt-3">
+                    <button id="prev-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded-md text-xs flex items-center transition-colors" onclick="previousQuestion()" disabled>
+                        <i class="fas fa-arrow-left mr-1 text-xs"></i> Previous
                     </button>
-                    <button id="next-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center transition-colors" onclick="nextQuestion()">
-                        Next <i class="fas fa-arrow-right ml-2"></i>
-                    </button>
-                </div>
-                
-                <div class="mt-6 text-center">
-                    <button id="submit-btn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium flex items-center mx-auto transition-colors" onclick="confirmSubmit()">
-                        <i class="fas fa-paper-plane mr-2"></i> Submit Test
+                    <button id="next-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs flex items-center transition-colors" onclick="nextQuestion()">
+                        Next <i class="fas fa-arrow-right ml-1 text-xs"></i>
                     </button>
                 </div>
             </div>
-             <!-- Question Navigation -->
-             <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-map-marked-alt mr-2 text-blue-500"></i> Questions Navigation
-                </h3>
-                <div class="question-nav grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2" id="question-nav">
-                    <!-- Question navigation buttons will be generated here -->
-                </div>
-            </div>
-            <!-- Progress Bar -->
-            <div class="mb-6">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-medium text-gray-600">Progress</span>
-                    <span id="progress-text" class="text-sm font-medium text-gray-600">0/{{ total_questions }}</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div id="progress-bar" class="progress-bar bg-blue-500 rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <!-- Question Filters -->
-            <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-wrap gap-2">
-                <button id="filter-all" class="filter-btn px-3 py-1 rounded-full border border-gray-300 text-sm font-medium transition-colors active" onclick="filterQuestions('all')">
-                    All Questions
-                </button>
-                <button id="filter-answered" class="filter-btn px-3 py-1 rounded-full border border-gray-300 text-sm font-medium transition-colors" onclick="filterQuestions('answered')">
-                    <i class="fas fa-check-circle mr-1 text-green-500"></i> Answered
-                </button>
-                <button id="filter-unanswered" class="filter-btn px-3 py-1 rounded-full border border-gray-300 text-sm font-medium transition-colors" onclick="filterQuestions('unanswered')">
-                    <i class="fas fa-question-circle mr-1 text-gray-500"></i> Unanswered
-                </button>
-                <button id="filter-flagged" class="filter-btn px-3 py-1 rounded-full border border-gray-300 text-sm font-medium transition-colors" onclick="filterQuestions('flagged')">
-                    <i class="fas fa-flag mr-1 text-yellow-500"></i> Flagged
-                </button>
-            </div>
+            
             <!-- Result Container (Hidden Initially) -->
-            <div id="result-container" class="bg-white rounded-xl shadow-sm p-8 text-center hidden">
-                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-check-circle text-green-500 text-3xl"></i>
+            <div id="result-container" class="bg-white rounded-lg shadow-sm p-4 text-center hidden">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-check-circle text-green-500 text-2xl"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Test Submitted Successfully!</h3>
-                <p id="result-text" class="text-gray-600 mb-6 text-lg">You scored 85% (17/20)</p>
-                <div class="flex justify-center space-x-4">
-                    <a href="{{ url_for('view_result') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center transition-colors">
-                        <i class="fas fa-poll mr-2"></i> View Results
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Test Submitted Successfully!</h3>
+                <p id="result-text" class="text-gray-600 mb-3 text-sm">You scored 85% (17/20)</p>
+                <div class="flex justify-center space-x-2">
+                    <a href="{{ url_for('view_result') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs flex items-center transition-colors">
+                        <i class="fas fa-poll mr-1 text-xs"></i> View Results
                     </a>
-                    <a href="{{ url_for('logout') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg flex items-center transition-colors">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    <a href="{{ url_for('logout') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded-md text-xs flex items-center transition-colors">
+                        <i class="fas fa-sign-out-alt mr-1 text-xs"></i> Logout
                     </a>
                 </div>
             </div>
@@ -240,41 +264,41 @@
         let timer;
         let secondsRemaining = 5 * 60; // 5 minutes for demo (change to 30*60 for production)
         let currentFilter = 'all';
-
+        
         // Initialize the page
         window.onload = function() {
             if (JSON.parse('{{ has_taken_exam|tojson }}')) {
                 return; // Don't initialize if exam was already taken
             }
-
+            
             // Generate question navigation
             generateQuestionNav();
-
+            
             // Load the first question
             loadQuestion(0);
-
+            
             // Start the timer
             startTimer();
-
+            
             // Get any saved answers and flags
             fetchAllAnswers();
             fetchAllFlags();
-
+            
             // Update the submit button display
             document.getElementById('submit-btn').style.display = 'none';
-                    
+            
             // Update progress
             updateProgress();
         };
-
+        
         // Generate question navigation buttons
         function generateQuestionNav() {
             const navContainer = document.getElementById('question-nav');
             navContainer.innerHTML = '';
-
+            
             for (let i = 0; i < totalQuestions; i++) {
                 const btn = document.createElement('div');
-                btn.className = 'question-number flex items-center justify-center w-10 h-10 rounded-lg cursor-pointer font-medium';
+                btn.className = 'question-number flex items-center justify-center rounded-md cursor-pointer font-medium';
                 btn.textContent = i + 1;
                 btn.onclick = function() {
                     loadQuestion(i);
@@ -282,32 +306,32 @@
                 navContainer.appendChild(btn);
             }
         }
-
+        
         // Update question navigation status
         function updateQuestionNav() {
             const buttons = document.querySelectorAll('.question-number');
             const answeredCount = Object.keys(userAnswers).filter(key => userAnswers[key] !== "").length;
-
+            
             buttons.forEach((btn, index) => {
                 // Reset all classes
-                btn.className = 'question-number flex items-center justify-center w-10 h-10 rounded-lg cursor-pointer font-medium';
+                btn.className = 'question-number flex items-center justify-center rounded-md cursor-pointer font-medium';
                 
                 // Remove flagged indicator
                 btn.classList.remove('flagged-question');
-
+                
                 if (index === currentQuestionIndex) {
-                    btn.classList.add('bg-blue-100', 'text-blue-600', 'border-2', 'border-blue-300');
+                    btn.classList.add('bg-blue-100', 'text-blue-600', 'border', 'border-blue-300');
                 } else if (userAnswers[index] !== undefined && userAnswers[index] !== '') {
-                    btn.classList.add('bg-green-100', 'text-green-600', 'border-2', 'border-green-300');
+                    btn.classList.add('bg-green-100', 'text-green-600', 'border', 'border-green-300');
                 } else {
-                    btn.classList.add('bg-gray-100', 'text-gray-600', 'border-2', 'border-gray-200');
+                    btn.classList.add('bg-gray-100', 'text-gray-600', 'border', 'border-gray-200');
                 }
-
+                
                 // Add flagged indicator if question is flagged
                 if (flaggedQuestions[index]) {
                     btn.classList.add('flagged-question');
                 }
-
+                
                 // Apply filter
                 if (currentFilter === 'answered' && (userAnswers[index] === undefined || userAnswers[index] === '')) {
                     btn.style.display = 'none';
@@ -319,10 +343,10 @@
                     btn.style.display = 'flex';
                 }
             });
-
+            
             // Update progress
             updateProgress();
-                    
+            
             // Show submit button only when on the last question
             if (currentQuestionIndex === totalQuestions - 1) {
                 document.getElementById('submit-btn').style.display = 'flex';
@@ -332,7 +356,7 @@
                 document.getElementById('next-btn').style.display = 'flex';
             }
         }
-
+        
         // Filter questions based on status
         function filterQuestions(filter) {
             currentFilter = filter;
@@ -345,25 +369,25 @@
             
             updateQuestionNav();
         }
-
+        
         // Update progress bar and text
         function updateProgress() {
             const answeredCount = Object.keys(userAnswers).filter(key => userAnswers[key] !== "").length;
             const progressPercentage = (answeredCount / totalQuestions) * 100;
-                    
+            
             document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
             document.getElementById('progress-text').textContent = `${answeredCount}/${totalQuestions}`;
         }
-
+        
         // Load a specific question
         function loadQuestion(questionNum) {
             // Save current answer before moving
             saveCurrentAnswer();
             saveCurrentFlag();
-
+            
             // Update current question index
             currentQuestionIndex = questionNum;
-
+            
             // Fetch the question data
             fetch(`/get_question/${questionNum}`)
                 .then(response => {
@@ -377,36 +401,36 @@
                         alert(data.error);
                         return;
                     }
-
+                    
                     // Update question number and text
                     document.getElementById('question-number').textContent = `Question ${questionNum + 1}`;
                     document.getElementById('question-text').textContent = data.question;
-
+                    
                     // Update options
                     document.getElementById('option-a-text').textContent = data.option_a;
                     document.getElementById('option-b-text').textContent = data.option_b;
                     document.getElementById('option-c-text').textContent = data.option_c;
                     document.getElementById('option-d-text').textContent = data.option_d;
-
+                    
                     // Clear previous selection
                     clearOptionSelection();
-
+                    
                     // Highlight any previous answer
                     if (data.current_answer) {
                         selectOption(data.current_answer, false);
                         document.getElementById('question-status').textContent = 'Answered';
-                        document.getElementById('question-status').className = 'text-sm px-3 py-1 rounded-full bg-green-100 text-green-600';
+                        document.getElementById('question-status').className = 'text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-600';
                     } else {
                         document.getElementById('question-status').textContent = 'Unanswered';
-                        document.getElementById('question-status').className = 'text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600';
+                        document.getElementById('question-status').className = 'text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600';
                     }
-
+                    
                     // Update flag button
                     updateFlagButton(questionNum);
-
+                    
                     // Update navigation buttons
                     updateNavButtons();
-
+                    
                     // Update question navigation
                     updateQuestionNav();
                 })
@@ -415,13 +439,13 @@
                     alert('Error loading question. Please try again.');
                 });
         }
-
+        
         // Update navigation buttons based on current position
         function updateNavButtons() {
             document.getElementById('prev-btn').disabled = (currentQuestionIndex === 0);
             document.getElementById('next-btn').disabled = (currentQuestionIndex === totalQuestions - 1);
         }
-
+        
         // Clear option selection
         function clearOptionSelection() {
             const options = document.querySelectorAll('.option');
@@ -431,33 +455,33 @@
                 option.classList.remove('border-blue-500', 'text-white');
             });
         }
-
+        
         // Select an option
         function selectOption(option, saveAnswer = true) {
             // Clear previous selection
             clearOptionSelection();
-
+            
             // Highlight selected option
             const selectedOption = document.getElementById(`option-${option}`);
             selectedOption.classList.add('selected');
             selectedOption.classList.remove('border-gray-200', 'text-gray-800');
-
+            
             // Update question status
             document.getElementById('question-status').textContent = 'Answered';
-            document.getElementById('question-status').className = 'text-sm px-3 py-1 rounded-full bg-green-100 text-green-600';
-
+            document.getElementById('question-status').className = 'text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-600';
+            
             // Save the answer
             if (saveAnswer) {
                 userAnswers[currentQuestionIndex] = option;
-
+                
                 // Save to server
                 saveCurrentAnswer();
-
+                
                 // Update question navigation
                 updateQuestionNav();
             }
         }
-
+        
         // Toggle flag for current question
         function toggleFlag() {
             const questionNum = currentQuestionIndex;
@@ -481,7 +505,7 @@
             // Update navigation
             updateQuestionNav();
         }
-
+        
         // Update flag button based on current question status
         function updateFlagButton(questionNum) {
             const flagBtn = document.getElementById('flag-btn');
@@ -494,11 +518,11 @@
                 flagBtn.innerHTML = '<i class="fas fa-flag"></i>';
             }
         }
-
+        
         // Save current answer to server
         function saveCurrentAnswer() {
             const answer = userAnswers[currentQuestionIndex];
-
+            
             if (answer !== undefined) {
                 fetch('/save_answer', {
                     method: 'POST',
@@ -525,11 +549,11 @@
                 });
             }
         }
-
+        
         // Save current flag to server
         function saveCurrentFlag() {
             const isFlagged = flaggedQuestions[currentQuestionIndex] || false;
-
+            
             fetch('/save_flag', {
                 method: 'POST',
                 headers: {
@@ -554,21 +578,21 @@
                 console.error('Error saving flag:', error);
             });
         }
-
+        
         // Go to next question
         function nextQuestion() {
             if (currentQuestionIndex < totalQuestions - 1) {
                 loadQuestion(currentQuestionIndex + 1);
             }
         }
-
+        
         // Go to previous question
         function previousQuestion() {
             if (currentQuestionIndex > 0) {
                 loadQuestion(currentQuestionIndex - 1);
             }
         }
-
+        
         // Fetch all saved answers from server
         function fetchAllAnswers() {
             fetch('/get_all_answers')
@@ -594,7 +618,7 @@
                     console.error('Error fetching answers:', error);
                 });
         }
-
+        
         // Fetch all saved flags from server
         function fetchAllFlags() {
             fetch('/get_all_flags')
@@ -618,7 +642,7 @@
                     console.error('Error fetching flags:', error);
                 });
         }
-
+        
         // Start the countdown timer
         function startTimer() {
             // Check if there's a saved remaining time
@@ -626,24 +650,24 @@
             if (savedTime) {
                 secondsRemaining = parseInt(savedTime);
             }
-
+            
             timer = setInterval(function() {
                 secondsRemaining--;
-
+                
                 // Save time to localStorage
                 localStorage.setItem(`examTime_${sessionStorage.getItem('username')}_${sessionStorage.getItem('subject_id')}`, secondsRemaining.toString());
-
+                
                 if (secondsRemaining <= 0) {
                     clearInterval(timer);
                     submitTest(true);
                     return;
                 }
-
+                
                 const minutes = Math.floor(secondsRemaining / 60);
                 const seconds = secondsRemaining % 60;
-                document.getElementById('countdown').innerHTML = 
-                    `<i class="fas fa-clock mr-2"></i>${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
+                document.getElementById('countdown').innerHTML =
+                    `<i class="fas fa-clock mr-1 text-xs"></i>${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
                 // Change style when less than 5 minutes
                 if (secondsRemaining < 300) {
                     document.getElementById('countdown').classList.add('timer-pulse');
@@ -652,13 +676,13 @@
                 }
             }, 1000);
         }
-
+        
         // Confirm before submitting test
         function confirmSubmit() {
             const answeredCount = Object.keys(userAnswers).filter(key => userAnswers[key] !== "").length;
             const unansweredCount = totalQuestions - answeredCount;
             const flaggedCount = Object.keys(flaggedQuestions).filter(key => flaggedQuestions[key]).length;
-
+            
             let message = `Are you sure you want to submit your test?`;
             if (unansweredCount > 0) {
                 message += `\n\nYou have ${unansweredCount} unanswered question(s).`;
@@ -666,25 +690,24 @@
             if (flaggedCount > 0) {
                 message += `\nYou have ${flaggedCount} flagged question(s) for review.`;
             }
-
-            // Create a custom modal instead of using default confirm
+            
             if (confirm(message)) {
                 submitTest(false);
             }
         }
-
+        
         // Submit the test
         function submitTest(timeExpired = false) {
             // Save current answer and flag
             saveCurrentAnswer();
             saveCurrentFlag();
-
+            
             // Stop the timer
             clearInterval(timer);
-
+            
             // Remove time from localStorage
             localStorage.removeItem(`examTime_${sessionStorage.getItem('username')}_${sessionStorage.getItem('subject_id')}`);
-
+            
             // Submit to server
             fetch('/submit_test', {
                 method: 'POST',
@@ -706,25 +729,22 @@
                     alert(data.error);
                     return;
                 }
-
+                
                 // Hide question container
                 document.getElementById('question-container').style.display = 'none';
-
+                
                 // Show result
                 document.getElementById('result-container').style.display = 'block';
-                document.getElementById('result-text').textContent = 
+                document.getElementById('result-text').textContent =
                     `You scored ${data.score}% (${data.correct_answers}/${data.total_questions})`;
-
+                
                 // Hide timer
                 document.getElementById('countdown').style.display = 'none';
-
-                // Hide question navigation
-                document.querySelector('.question-nav-container').style.display = 'none';
             })
-            // .catch(error => {
-            //     console.error('Error submitting test:', error);
-            //     alert('Error submitting test. Please try again.');
-            // });
+            .catch(error => {
+                console.error('Error submitting test:', error);
+                alert('Error submitting test. Please try again.');
+            });
         }
     </script>
 </body>

@@ -60,6 +60,10 @@
                     <i class="fas fa-book mr-3"></i>
                     <span class="nav-text">Subjects</span>
                 </a>
+                <a href="{{ url_for('admin_analytics') }}" class="nav-item flex items-center px-4 py-3 text-white hover:bg-indigo-700 transition">
+                    <i class="fas fa-chart-line mr-3"></i>
+                    <span class="nav-text">Analytics</span>
+                </a>
                 <div class="px-4 py-2 text-indigo-200 uppercase text-xs font-semibold tracking-wider mt-4">
                     Account
                 </div>
@@ -125,30 +129,54 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 {% if subjects %}
                                     {% for subject in subjects %}
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ subject.id }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ subject.subject_name }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <div class="flex space-x-2">
-                                                    <a href="{{ url_for('view_questions', subject_id=subject.id) }}" 
-                                                       class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                                                        <i class="fas fa-tasks mr-1"></i>Manage Questions
-                                                    </a>
-                                                    <a href="{{ url_for('delete_subject', subject_id=subject.id) }}" 
-                                                       onclick="return confirm('Are you sure? This will delete all questions and scores for this subject.')"
-                                                       class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
-                                                        <i class="fas fa-trash mr-1"></i>Delete
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ subject.id }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ subject.subject_name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            {% if subject.is_active == 1 %}
+                                                <span class="text-green-600">Enabled</span>
+                                            {% else %}
+                                                <span class="text-red-600">Disabled</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <form method="POST">
+                                                <input type="hidden" name="subject_id" value="{{ subject.id }}">
+                                                {% if subject.is_active == 1 %}
+                                                    <input type="hidden" name="action" value="disable">
+                                                    <button type="submit" class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                                                        <i class="fas fa-ban mr-1"></i>Disable
+                                                    </button>
+                                                {% else %}
+                                                    <input type="hidden" name="action" value="enable">
+                                                    <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                                                        <i class="fas fa-check mr-1"></i>Enable
+                                                    </button>
+                                                {% endif %}
+                                            </form>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <div class="flex space-x-2">
+                                                <a href="{{ url_for('view_questions', subject_id=subject.id) }}"
+                                                class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                                                    <i class="fas fa-tasks mr-1"></i>Manage Questions
+                                                </a>
+                                                <a href="{{ url_for('delete_subject', subject_id=subject.id) }}"
+                                                onclick="return confirm('Are you sure? This will delete all questions and scores for this subject.')"
+                                                class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                                                    <i class="fas fa-trash mr-1"></i>Delete
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No subjects found</td>
+                                        <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No subjects found</td>
                                     </tr>
                                 {% endif %}
-                            </tbody>
+                                </tbody>
+                                
                         </table>
                     </div>
                 </div>

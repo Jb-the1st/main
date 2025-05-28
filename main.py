@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from functools import wraps
 from flask_mysqldb import MySQL
+from MySQLdb.cursors import DictCursor
 # from flask_bcrypt import Bcrypt
 import random
 import os
@@ -10,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = "b@0J98!xZq#P$T2&k7rM"
 # bcrypt = Bcrypt(app)
 # MySQL Configuration
-development = False  # Set to True for local development, False for production
+development = True  # Set to True for local development, False for production
 if development:
     # Local database config
     app.config['MYSQL_HOST'] = 'localhost'
@@ -75,27 +76,32 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
         subject_id = request.form.get("subject_id")
-        
+
         cur = mysql.connection.cursor()
         cur.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
         user = cur.fetchone()
-        
+
         if user:
             session["username"] = username
-            
+
             if subject_id:
                 print(f"Setting subject_id to: {subject_id}")
-                
-                cur.execute("SELECT subject_name FROM subjects WHERE id = %s", (subject_id,))
+                cur.execute("SELECT subject_name, is_active FROM subjects WHERE id = %s", (subject_id,))
                 subject = cur.fetchone()
+
                 if subject:
+                    if subject["is_active"] == 0:
+                        flash("This subject is currently disabled", "error")
+                        cur.close()
+                        return redirect(url_for('login'))
+
                     session["subject_id"] = subject_id
                     session["subject_name"] = subject["subject_name"]
-                    
-                    # Fetch the score record for this user and subject
+
+                    # Check if the user has taken the exam
                     cur.execute("SELECT score FROM scores WHERE username = %s AND subject_id = %s", (username, subject_id))
                     result = cur.fetchone()
-                    
+
                     if result:
                         session["has_taken_exam"] = True
                         session["score"] = result["score"]
@@ -103,39 +109,40 @@ def login():
                         session["has_taken_exam"] = False
                         session["score"] = 0
                         session["question_index"] = 0
-                        # Load questions for this subject
+
                         subject_questions = load_questions(subject_id)
-                        
                         if not subject_questions:
                             flash("No questions available for this subject", "error")
                             cur.close()
                             return render_template("login.html", subjects=manage_subjects())
-                        
-                        # Create question indices and randomize their order
+
                         question_indices = list(range(len(subject_questions)))
-                        random.shuffle(question_indices)  # Shuffle the question indices
+                        random.shuffle(question_indices)
                         session["question_indices"] = question_indices
-                        
-                        # Initialize answers tracking dictionary
                         session["user_answers"] = {str(i): "" for i in range(len(subject_questions))}
-                        
+
                     cur.close()
                     return redirect(url_for("home"))
-            
+                else:
+                    flash("Invalid subject selected", "error")
+                    cur.close()
+                    return redirect(url_for("login"))
+
             flash("Please select a valid subject", "error")
-            
+            cur.close()
         else:
             flash("Invalid username or password", "error")
-    
+
+    # GET method: show login page
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM subjects")
     subjects = cur.fetchall()
     cur.close()
-    
+
     return render_template("login.html", subjects=subjects)
 
-
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/admin/register", methods=["GET", "POST"])
+@admin_required
 def register():
     if request.method == "POST":
         username = request.form["username"]
@@ -144,13 +151,12 @@ def register():
         try:
             cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
             mysql.connection.commit()
+            flash("Registration successful! New user has been added.", "success")
+            return redirect(url_for("admin_dashboard"))
         except Exception as e:
             flash("Username is already in use", "error")
-            # return "Error: " + str(e)
-            return redirect(url_for("register"))
         finally:
             cur.close()
-        flash("Registration successful! You can now log in.", "success")
     return render_template("register.html")
 
 @app.route("/logout")
@@ -189,39 +195,39 @@ def home():
 @app.route("/get_question/<int:question_num>")
 @login_required
 def get_question(question_num):
+    subject_id = session.get("subject_id")
+    if not subject_id:
+        return jsonify({"error": "Subject not found in session"}), 400
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM subjects WHERE id = %s", (subject_id,))
+    subject = cursor.fetchone()
+    
+    if not subject or subject['is_active'] == 0:
+        return jsonify({"error": "This subject is currently disabled"}), 403
+
     # Check if user has already taken the exam
     if session.get("has_taken_exam", True):
         return jsonify({
             "message": f"Test for {session.get('subject_name', 'Unknown')} already completed", 
             "score": session.get("score", 0), 
-            "total_questions": len(load_questions(session.get("subject_id")))
+            "total_questions": len(load_questions(subject_id))
         })
-    
+
     # Get subject questions
-    subject_questions = load_questions(session.get("subject_id"))
+    subject_questions = load_questions(subject_id)
     question_indices = session.get("question_indices", list(range(len(subject_questions))))
     
-    # Make sure question_num is valid
     if question_num >= len(subject_questions) or question_num < 0:
-        return jsonify({
-            "error": "Invalid question number"
-        }), 400
-        
-    # Update current question index
+        return jsonify({"error": "Invalid question number"}), 400
+
     session["question_index"] = question_num
-    
-    # Get the actual question based on the randomized index
     actual_question_index = question_indices[question_num]
     q = subject_questions[actual_question_index]
-    
-    # Debug print
-    print(f"Loading question {question_num}, using actual index {actual_question_index}: {q['question'][:30]}...")
-    print(f"Correct answer is: {q['answer']}")
-    
-    # Get any previously saved answer for this question
+
     user_answers = session.get("user_answers", {})
     previous_answer = user_answers.get(str(question_num), "")
-    
+
     return jsonify({
         "question": q["question"],
         "option_a": q["option_a"],
@@ -231,6 +237,7 @@ def get_question(question_num):
         "current_answer": previous_answer,
         "question_number": question_num
     })
+
 @app.route("/view_result")
 @login_required
 def view_result():
@@ -464,22 +471,32 @@ def search_users():
 @admin_required
 def manage_subjects():
     if request.method == "POST":
-        subject_name = request.form.get("subject_name")
-        if subject_name:
+        if request.form.get("subject_name"):
+            subject_name = request.form.get("subject_name")
             cur = mysql.connection.cursor()
             cur.execute("INSERT INTO subjects (subject_name) VALUES (%s)", (subject_name,))
             mysql.connection.commit()
             cur.close()
             flash("Subject added successfully!", "success")
-    
+        elif request.form.get("subject_id") and request.form.get("action"):
+            subject_id = request.form.get("subject_id")
+            action = request.form.get("action")
+            cur = mysql.connection.cursor()
+            if action == "enable":
+                cur.execute("UPDATE subjects SET is_active = 1 WHERE id = %s", (subject_id,))
+            elif action == "disable":
+                cur.execute("UPDATE subjects SET is_active = 0 WHERE id = %s", (subject_id,))
+            mysql.connection.commit()
+            cur.close()
+            flash("Subject updated successfully!", "success")
+
     # Get all subjects
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM subjects")
     subjects = cur.fetchall()
     cur.close()
-    
-    return render_template("admin_subjects.html", subjects=subjects)
 
+    return render_template("admin_subjects.html", subjects=subjects)
 @app.route("/admin/subjects/delete/<int:subject_id>")
 @admin_required
 def delete_subject(subject_id):
@@ -563,6 +580,86 @@ def upload_questions(subject_id):
         flash("Only CSV files are allowed", "error")
     
     return redirect(url_for("view_questions", subject_id=subject_id))
+@app.route("/admin/analytics")
+@admin_required
+def admin_analytics():
+    cur = mysql.connection.cursor(DictCursor)
+
+    # Query to get scores grouped by subject
+    cur.execute("""
+        SELECT
+            s.id AS subject_id,
+            s.subject_name AS subject_name,
+            COUNT(sc.id) AS total_attempts,
+            COUNT(DISTINCT sc.username) AS total_users,
+            AVG(sc.score) AS average_score,
+            MAX(sc.score) AS highest_score,
+            MIN(sc.score) AS lowest_score,
+            STDDEV(sc.score) AS score_deviation
+        FROM subjects s
+        LEFT JOIN scores sc ON s.id = sc.subject_id
+        GROUP BY s.id, s.subject_name
+        ORDER BY s.subject_name
+    """)
+
+    subjects_data = cur.fetchall()
+
+    # Get distribution data for score ranges
+    cur.execute("""
+        SELECT
+            s.id AS subject_id,
+            s.subject_name AS subject_name,
+            CASE
+                WHEN sc.score < 40 THEN '0-39'
+                WHEN sc.score < 60 THEN '40-59'
+                WHEN sc.score < 75 THEN '60-74'
+                WHEN sc.score < 90 THEN '75-89'
+                ELSE '90-100'
+            END AS score_range,
+            COUNT(sc.id) AS count
+        FROM subjects s
+        JOIN scores sc ON s.id = sc.subject_id
+        GROUP BY s.id, s.subject_name, score_range
+        ORDER BY s.subject_name, score_range
+    """)
+
+    distribution_data = cur.fetchall()
+
+    cur.close()
+
+    # Process data for charts
+    subjects = []
+    avg_scores = []
+    user_counts = []
+    distribution_chart_data = {}
+
+    for subject in subjects_data:
+        subjects.append(subject['subject_name'])
+        avg_scores.append(float(subject['average_score']) if subject['average_score'] is not None else 0)
+        user_counts.append(subject['total_users'] or 0)
+
+    for item in distribution_data:
+        subject_name = item['subject_name']
+        if subject_name not in distribution_chart_data:
+            distribution_chart_data[subject_name] = {'ranges': [], 'counts': []}
+        
+        distribution_chart_data[subject_name]['ranges'].append(item['score_range'])
+        distribution_chart_data[subject_name]['counts'].append(item['count'])
+
+    # Optional: if no analytics data exists at all, redirect or show message
+    if not any(avg_scores):
+        flash("No analytics data available yet. No scores have been recorded.", "info")
+        return redirect(url_for("admin_dashboard"))
+
+    return render_template(
+        "admin_analytics.html",
+        subjects_data=subjects_data,
+        subjects=subjects,
+        avg_scores=avg_scores,
+        user_counts=user_counts,
+        distribution_chart_data=distribution_chart_data
+    )
+
 
 @app.route("/admin/questions/add/<int:subject_id>", methods=["POST"])
 @admin_required

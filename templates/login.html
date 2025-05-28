@@ -277,6 +277,7 @@
             <div class="input-group">
                 <label for="subject">Select Subject:</label>
                 <select name="subject_id" id="subject" class="form-control">
+                    <option value="">Select your Course</option>
                     {% for subject in subjects %}
                         <option value="{{ subject.id }}">{{ subject.subject_name }}</option>
                     {% endfor %}
@@ -284,12 +285,6 @@
             </div>
            
             <button type="submit" class="btn-login mb-6">Login</button>            
-            <div class="text-center">
-                <p class="text-gray-600">Don't have an account? <a href="{{ url_for('register') }}" class="text-indigo-600 hover:text-indigo-500 font-medium">Sign up</a></p>
-            </div>
-            <div class="text-center">
-                <p hidden class="text-gray-600">Admin? <a href="{{ url_for('admin_login') }}" class="text-indigo-600 hover:text-indigo-500 font-medium">Admin Login</a></p>
-            </div>
         </form>
         
         
