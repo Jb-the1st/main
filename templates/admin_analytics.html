@@ -89,7 +89,14 @@
                         <div class="px-6 py-4">
                             <p class="text-sm text-gray-500">
                                 <strong>Students:</strong> {{ subject.total_users }}<br>
-                                <strong>Average Score:</strong> {{ subject.average_score | round(2) }}%<br>
+                                <strong>Average Score:</strong>
+                                {% if subject.average_score is not none %}
+                                  {{ subject.average_score | round(2) }}%
+                                {% else %}
+                                  N/A
+                                {% endif %}
+                                <br>
+                                
                                 <strong>Highest Score:</strong> {{ subject.highest_score }}%<br>
                                 <strong>Lowest Score:</strong> {{ subject.lowest_score }}%
                             </p>

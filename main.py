@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = "b@0J98!xZq#P$T2&k7rM"
 # bcrypt = Bcrypt(app)
 # MySQL Configuration
-development = False  # Set to True for local development, False for production
+development = True  # Set to True for local development, False for production
 if development:
     # Local database config
     app.config['MYSQL_HOST'] = 'localhost'
